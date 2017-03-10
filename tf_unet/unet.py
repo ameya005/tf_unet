@@ -228,8 +228,8 @@ class Unet(object):
                                                                               labels=flat_labels))
         elif cost_name == "dice_coefficient":
             intersection = tf.reduce_sum(flat_logits * flat_labels, axis=1, keep_dims=True)
-            union = tf.reduce_sum(tf.mul(flat_logits, flat_logits), axis=1, keep_dims=True) \
-                    + tf.reduce_sum(tf.mul(flat_labels, flat_labels), axis=1, keep_dims=True)
+            union = tf.reduce_sum(tf.multiply(flat_logits, flat_logits), axis=1, keep_dims=True) \
+                    + tf.reduce_sum(tf.multiply(flat_labels, flat_labels), axis=1, keep_dims=True)
             loss = 1 - tf.reduce_mean(2 * intersection/ (union))
         else:
             raise ValueError("Unknown cost function: "%cost_name)
@@ -263,14 +263,14 @@ class Unet(object):
             
         return prediction
     
-    def save(self, sess, model_path):
+    def save(self, sess, model_path, global_step=0):
         """
         Saves the current session to a checkpoint
         
         :param sess: current session
         :param model_path: path to file system location
         """
-        
+        logging.info('Saving to %s' % model_path) 
         saver = tf.train.Saver()
         save_path = saver.save(sess, model_path)
         return save_path
@@ -282,9 +282,9 @@ class Unet(object):
         :param sess: current session instance
         :param model_path: path to file system checkpoint location
         """
-        
-        saver = tf.train.Saver()
-        saver.restore(sess, model_path)
+        print(model_path) 
+        saver = tf.train.import_meta_graph(model_path+'model.cpkt.meta')
+        saver.restore(sess, model_path+'model.cpkt')
         logging.info("Model restored from file: %s" % model_path)
 
 class Trainer(object):
@@ -298,7 +298,7 @@ class Trainer(object):
     """
     
     prediction_path = "prediction"
-    verification_batch_size = 4
+    verification_batch_size = 500
     
     def __init__(self, net, batch_size=1, optimizer="momentum", opt_kwargs={}):
         self.net = net
@@ -427,7 +427,7 @@ class Trainer(object):
                 self.output_epoch_stats(epoch, total_loss, training_iters, lr)
                 self.store_prediction(sess, test_x, test_y, "epoch_%s"%epoch)
                     
-                save_path = self.net.save(sess, save_path)
+                save_path = self.net.save(sess, save_path, global_step=epoch)
             logging.info("Optimization Finished!")
             
             return save_path
