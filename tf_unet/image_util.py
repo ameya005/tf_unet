@@ -21,6 +21,7 @@ import glob
 import numpy as np
 from PIL import Image
 
+
 class BaseDataProvider(object):
     """
     Abstract base class for DataProvider implementation. Subclasses have to
@@ -53,7 +54,7 @@ class BaseDataProvider(object):
         
         nx = data.shape[1]
         ny = data.shape[0]
-
+        #print(nx,ny)
         return train_data.reshape(1, ny, nx, self.channels), labels.reshape(1, ny, nx, self.n_class),
     
     def _process_labels(self, label):
@@ -157,5 +158,5 @@ class ImageDataProvider(BaseDataProvider):
         
         img = self._load_file(image_name, np.float32)
         label = self._load_file(label_name, np.bool)
-    
+        #print(img.shape, label.shape)
         return img,label

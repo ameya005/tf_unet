@@ -21,16 +21,32 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 import tensorflow as tf
 
+conv_weight_num = 0
+bias_num = 0
+deconv_weight_num = 0
+
 def weight_variable(shape, stddev=0.1):
+    global conv_weight_num
     initial = tf.truncated_normal(shape, stddev=stddev)
-    return tf.Variable(initial)
+    print('Weight name W_%d' % conv_weight_num)
+    w = tf.Variable(initial, name='W_%d' % conv_weight_num)
+    conv_weight_num += 1
+    return w
 
 def weight_variable_devonc(shape, stddev=0.1):
-    return tf.Variable(tf.truncated_normal(shape, stddev=stddev))
+    global deconv_weight_num
+    print('Deconv weight name D_W_%d'%deconv_weight_num)
+    w = tf.Variable(tf.truncated_normal(shape, stddev=stddev), name='D_W_%d'%deconv_weight_num)
+    deconv_weight_num += 1
+    return w
 
 def bias_variable(shape):
+    global bias_num
     initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial)
+    print('Bias name bias_%d'%bias_num)
+    b = tf.Variable(initial, name='bias_%d'%bias_num)
+    bias_num+=1
+    return b
 
 def conv2d(x, W,keep_prob_):
     conv_2d = tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='VALID')

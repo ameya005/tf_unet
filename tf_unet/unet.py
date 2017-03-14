@@ -68,7 +68,7 @@ def create_conv_net(x, keep_prob, channels, n_class, layers=3, features_root=16,
     dw_h_convs = OrderedDict()
     up_h_convs = OrderedDict()
     
-    in_size = 1000
+    in_size = 256
     size = in_size
     # down layers
     for layer in range(0, layers):
@@ -187,7 +187,7 @@ class Unet(object):
         self.keep_prob = tf.placeholder(tf.float32) #dropout (keep probability)
         
         logits, self.variables, self.offset = create_conv_net(self.x, self.keep_prob, channels, n_class, **kwargs)
-        
+        logging.info(self.offset) 
         self.cost = self._get_cost(logits, cost, cost_kwargs)
         
         self.gradients_node = tf.gradients(self.cost, self.variables)
@@ -262,6 +262,31 @@ class Unet(object):
             prediction = sess.run(self.predicter, feed_dict={self.x: x_test, self.y: y_dummy, self.keep_prob: 1.})
             
         return prediction
+
+    def predict_on_patches(self, model_path, list_patches):
+        """
+        Uses the model to create a prediction for a larger image with split patches
+        """
+
+        init = tf.global_variables_initializer()
+        with tf.Session() as sess:
+            #init variables
+            sess.run(init)
+
+            #restore model
+            self.restore(sess, model_path)
+            #self.run_test(sess,model_path)
+            predictions = []
+            #Run over list of patches
+            for i in xrange(len(list_patches)):
+                out_pred_row = []
+                for patch in list_patches[i]:
+                    y_dummy = np.empty((patch.shape[0], patch.shape[1], patch.shape[2], self.n_class))
+                    out_pred_row.append(sess.run(self.predicter, feed_dict={self.x: patch, self.y: y_dummy, self.keep_prob: 1}))
+                predictions.append(out_pred_row)
+
+        return predictions
+            
     
     def save(self, sess, model_path, global_step=0):
         """
@@ -270,9 +295,9 @@ class Unet(object):
         :param sess: current session
         :param model_path: path to file system location
         """
-        logging.info('Saving to %s' % model_path) 
         saver = tf.train.Saver()
-        save_path = saver.save(sess, model_path)
+        save_path = saver.save(sess, model_path, global_step=global_step)
+        logging.info('Saving to %s' % save_path)
         return save_path
     
     def restore(self, sess, model_path):
@@ -282,10 +307,21 @@ class Unet(object):
         :param sess: current session instance
         :param model_path: path to file system checkpoint location
         """
-        print(model_path) 
-        saver = tf.train.import_meta_graph(model_path+'model.cpkt.meta')
-        saver.restore(sess, model_path+'model.cpkt')
-        logging.info("Model restored from file: %s" % model_path)
+        print(model_path)
+        ckpt = tf.train.get_checkpoint_state(model_path)
+        saver = tf.train.Saver()
+        if ckpt and ckpt.model_checkpoint_path:
+            print(ckpt.model_checkpoint_path)
+            #saver = tf.train.import_meta_graph(ckpt.model_checkpoint_path+'.meta')
+            saver.restore(sess, ckpt.model_checkpoint_path)
+            logging.info("Model restored from file: %s" % ckpt.model_checkpoint_path)
+
+    def run_test(self, sess, model_path, num=4):
+        print(model_path)
+        ckpt = tf.train.get_checkpoint_state(model_path)
+        saver = tf.train.import_meta_graph(ckpt.model_checkpoint_path+'.meta')
+        print('./%s'+ckpt.model_checkpoint_path)
+        saver.restore(sess, './'+ckpt.model_checkpoint_path)
 
 class Trainer(object):
     """
@@ -298,7 +334,7 @@ class Trainer(object):
     """
     
     prediction_path = "prediction"
-    verification_batch_size = 500
+    verification_batch_size = 10
     
     def __init__(self, net, batch_size=1, optimizer="momentum", opt_kwargs={}):
         self.net = net
@@ -380,18 +416,17 @@ class Trainer(object):
         :param restore: Flag if previous model should be restored 
         """
         save_path = os.path.join(output_path, "model.cpkt")
+        model_path = save_path = os.path.join(output_path, "model.cpkt")
         if epochs == 0:
             return save_path
         
         init = self._initialize(training_iters, output_path, restore)
-        
+        saver = tf.train.Saver() 
         with tf.Session() as sess:
             sess.run(init)
             
             if restore:
-                ckpt = tf.train.get_checkpoint_state(output_path)
-                if ckpt and ckpt.model_checkpoint_path:
-                    self.net.restore(sess, ckpt.model_checkpoint_path)
+                self.net.restore(sess, model_path)
             
             test_x, test_y = data_provider(self.verification_batch_size)
             pred_shape = self.store_prediction(sess, test_x, test_y, "_init")
@@ -427,7 +462,8 @@ class Trainer(object):
                 self.output_epoch_stats(epoch, total_loss, training_iters, lr)
                 self.store_prediction(sess, test_x, test_y, "epoch_%s"%epoch)
                     
-                save_path = self.net.save(sess, save_path, global_step=epoch)
+                save_path = saver.save(sess, model_path, global_step=epoch)
+                logging.info('Saving to %s' % save_path)
             logging.info("Optimization Finished!")
             
             return save_path
