@@ -251,7 +251,9 @@ class Unet(object):
         """
         
         init = tf.global_variables_initializer()
-        with tf.Session() as sess:
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        
+        with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
             # Initialize variables
             sess.run(init)
         
@@ -269,7 +271,8 @@ class Unet(object):
         """
 
         init = tf.global_variables_initializer()
-        with tf.Session() as sess:
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
             #init variables
             sess.run(init)
 
@@ -336,11 +339,13 @@ class Trainer(object):
     prediction_path = "prediction"
     verification_batch_size = 10
     
-    def __init__(self, net, batch_size=1, optimizer="momentum", opt_kwargs={}):
+    def __init__(self, net, batch_size=1, optimizer="momentum", predict_path="prediction", opt_kwargs={}):
         self.net = net
         self.batch_size = batch_size
         self.optimizer = optimizer
         self.opt_kwargs = opt_kwargs
+        self.prediction_path = predict_path
+        
         
     def _get_optimizer(self, training_iters, global_step):
         if self.optimizer == "momentum":
@@ -421,8 +426,10 @@ class Trainer(object):
             return save_path
         
         init = self._initialize(training_iters, output_path, restore)
-        saver = tf.train.Saver() 
-        with tf.Session() as sess:
+        saver = tf.train.Saver()
+       
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
             sess.run(init)
             
             if restore:
