@@ -69,7 +69,7 @@ def create_conv_net(x, keep_prob, channels, n_class, layers=3, features_root=16,
     dw_h_convs = OrderedDict()
     up_h_convs = OrderedDict()
 
-    in_size = nx
+    in_size = 256
     size = in_size
     # down layers
     for layer in range(0, layers):
@@ -253,7 +253,7 @@ class Unet(object):
 
         init = tf.global_variables_initializer()
         config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = 0.5
+        config.gpu_options.per_process_gpu_memory_fraction = 0.33
         with tf.Session(config=config) as sess:
             # Initialize variables
             sess.run(init)
@@ -273,7 +273,7 @@ class Unet(object):
 
         init = tf.global_variables_initializer()
         config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = 0.5
+        config.gpu_options.per_process_gpu_memory_fraction = 0.33
         with tf.Session(config=config) as sess:
             #init variables
             sess.run(init)
@@ -431,7 +431,7 @@ class Trainer(object):
         saver = tf.train.Saver()
 
         config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = 0.5
+        config.gpu_options.per_process_gpu_memory_fraction = 0.33
         with tf.Session(config=config) as sess:
             sess.run(init)
 

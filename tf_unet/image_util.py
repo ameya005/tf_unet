@@ -71,8 +71,8 @@ class BaseDataProvider(object):
     def _process_data(self, data):
         # normalization
         data = np.clip(np.fabs(data), self.a_min, self.a_max)
-        data -= np.amin(data)
-        data /= np.amax(data)
+        data -= np.mean(data)
+        data /= np.max(data)
         return data
     
     def _post_process(self, data, labels):
@@ -150,6 +150,13 @@ class ImageDataProvider(BaseDataProvider):
         self.file_idx += 1
         if self.file_idx >= len(self.data_files):
             self.file_idx = 0 
+    
+#    def _process_data(self, data):
+#        # normalization
+#        data = np.clip(np.fabs(data), self.a_min, self.a_max)
+#        data -= np.mean(data)
+#        data /= np.std(data)
+#        return data
         
     def _next_data(self):
         self._cylce_file()
