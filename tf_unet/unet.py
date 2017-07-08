@@ -199,6 +199,8 @@ class Unet(object):
         self.predicter = pixel_wise_softmax_2(logits)
         self.correct_pred = tf.equal(tf.argmax(self.predicter, 3), tf.argmax(self.y, 3))
         self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32))
+        self.sess=None
+        self.model_loaded=False
 
     def _get_cost(self, logits, cost_name, cost_kwargs):
         """
@@ -266,29 +268,31 @@ class Unet(object):
 
         return prediction
 
+    def load_model(self, model_path):
+        config = tf.ConfigProto()
+        config.gpu_options.per_process_gpu_memory_fraction = 0.95
+        init = tf.global_variables_initializer()
+        self.sess = tf.Session(config=config)
+        self.sess.run(init)
+        self.restore(self.sess, model_path)
+        self.model_loaded=True
+        return self.sess
+    
     def predict_on_patches(self, model_path, list_patches):
         """
         Uses the model to create a prediction for a larger image with split patches
         """
-
-        init = tf.global_variables_initializer()
-        config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = 0.33
-        with tf.Session(config=config) as sess:
-            #init variables
-            sess.run(init)
-
-            #restore model
-            self.restore(sess, model_path)
-            #self.run_test(sess,model_path)
-            predictions = []
-            #Run over list of patches
-            for i in xrange(len(list_patches)):
-                out_pred_row = []
-                for patch in list_patches[i]:
-                    y_dummy = np.empty((patch.shape[0], patch.shape[1], patch.shape[2], self.n_class))
-                    out_pred_row.append(sess.run(self.predicter, feed_dict={self.x: patch, self.y: y_dummy, self.keep_prob: 1}))
-                predictions.append(out_pred_row)
+        
+        if self.model_loaded != True:
+            self.sess=self.load_model(model_path)
+        predictions = []
+        #Run over list of patches
+        for i in xrange(len(list_patches)):
+            out_pred_row = []
+            for patch in list_patches[i]:
+                y_dummy = np.empty((patch.shape[0], patch.shape[1], patch.shape[2], self.n_class))
+                out_pred_row.append(self.sess.run(self.predicter, feed_dict={self.x: patch, self.y: y_dummy, self.keep_prob: 1}))
+            predictions.append(out_pred_row)
 
         return predictions
 
