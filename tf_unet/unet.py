@@ -33,7 +33,7 @@ from tf_unet.layers import (weight_variable, weight_variable_devonc, bias_variab
                             conv2d, deconv2d, max_pool, crop_and_concat, pixel_wise_softmax_2,
                             cross_entropy)
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s',filename = 'unet.py')
 
 def create_conv_net(x, keep_prob, channels, n_class, layers=3, features_root=16, filter_size=3, pool_size=2, summaries=True):
     """
@@ -139,14 +139,14 @@ def create_conv_net(x, keep_prob, channels, n_class, layers=3, features_root=16,
 
     if summaries:
         for i, (c1, c2) in enumerate(convs):
-            tf.summary.image('summary_conv_%02d_01'%i, get_image_summary(c1))
-            tf.summary.image('summary_conv_%02d_02'%i, get_image_summary(c2))
+            tf.summary.image('summary/conv_%02d_01'%i, get_image_summary(c1))
+            tf.summary.image('summary/conv_%02d_02'%i, get_image_summary(c2))
 
         for k in pools.keys():
-            tf.summary.image('summary_pool_%02d'%k, get_image_summary(pools[k]))
+            tf.summary.image('summary/pool_%02d'%k, get_image_summary(pools[k]))
 
         for k in deconv.keys():
-            tf.summary.image('summary_deconv_concat_%02d'%k, get_image_summary(deconv[k]))
+            tf.summary.image('summary/deconv_concat_%02d'%k, get_image_summary(deconv[k]))
 
         for k in dw_h_convs.keys():
             tf.summary.histogram("dw_convolution_%02d"%k + '/activations', dw_h_convs[k])
@@ -282,10 +282,10 @@ class Unet(object):
         """
         Uses the model to create a prediction for a larger image with split patches
         """
-        
+
         if self.model_loaded != True:
             self.sess=self.load_model(model_path)
-        predictions = []
+            predictions = []
         #Run over list of patches
         for i in xrange(len(list_patches)):
             out_pred_row = []
@@ -465,8 +465,8 @@ class Trainer(object):
                     for i in range(len(gradients)):
                         avg_gradients[i] = (avg_gradients[i] * (1.0 - (1.0 / (step+1)))) + (gradients[i] / (step+1))
 
-                    norm_gradients = [np.linalg.norm(gradient) for gradient in avg_gradients]
-                    self.norm_gradients_node.assign(norm_gradients).eval()
+                    #norm_gradients = [np.linalg.norm(gradient) for gradient in avg_gradients]
+                    #self.norm_gradients_node.assign(norm_gradients).eval()
 
                     if step % display_step == 0:
                         self.output_minibatch_stats(sess, summary_writer, step, batch_x, util.crop_to_shape(batch_y, pred_shape))
