@@ -20,7 +20,7 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 import glob
 import numpy as np
 from PIL import Image
-
+import os
 
 class BaseDataProvider(object):
     """
@@ -70,9 +70,9 @@ class BaseDataProvider(object):
     
     def _process_data(self, data):
         # normalization
-        data = np.clip(np.fabs(data), self.a_min, self.a_max)
-        data -= np.mean(data)
-        data /= np.max(data)
+        #data = np.clip(np.fabs(data), self.a_min, self.a_max)
+        data -= self.mean
+        data /= self.std
         return data
     
     def _post_process(self, data, labels):
@@ -123,10 +123,11 @@ class ImageDataProvider(BaseDataProvider):
     
     n_class = 2
     
-    def __init__(self, search_path, a_min=None, a_max=None, data_suffix=".tif", mask_suffix='_mask.tif'):
+    def __init__(self, search_path, a_min=None, a_max=None, data_suffix=".tif", mask_suffix='_mask.tif', global_param = {}):
         super(ImageDataProvider, self).__init__(a_min, a_max)
         self.data_suffix = data_suffix
         self.mask_suffix = mask_suffix
+        self.global_param = global_param
         self.file_idx = -1
         
         self.data_files = self._find_data_files(search_path)
@@ -143,7 +144,20 @@ class ImageDataProvider(BaseDataProvider):
     
     
     def _load_file(self, path, dtype=np.float32):
-        return np.array(Image.open(path), dtype)
+        img = np.array(Image.open(path), dtype)
+        img_basename = os.path.basename(path)
+        img_split_name = img_basename.split("-")
+        img_basename = '-'.join(img_split_name[:-1])
+        try:
+            std,mean = self.global_param[img_basename]
+        except:
+            print ("cannot find for image %s"%(img_basename))
+            std,mean = 1,0
+        self.std = std
+        self.mean = mean
+
+        return img
+        #return np.array(Image.open(path), dtype)
         # return np.squeeze(cv2.imread(image_name, cv2.IMREAD_GRAYSCALE))
 
     def _cylce_file(self):

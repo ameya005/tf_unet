@@ -33,7 +33,7 @@ from tf_unet.layers import (weight_variable, weight_variable_devonc, bias_variab
                             conv2d, deconv2d, max_pool, crop_and_concat, pixel_wise_softmax_2,
                             cross_entropy)
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s',filename = 'unet.py')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s',filename = 'unet.log')
 
 def create_conv_net(x, keep_prob, channels, n_class, layers=3, features_root=16, filter_size=3, pool_size=2, summaries=True):
     """
@@ -255,7 +255,7 @@ class Unet(object):
 
         init = tf.global_variables_initializer()
         config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = 0.33
+        config.gpu_options.per_process_gpu_memory_fraction = 0.45
         with tf.Session(config=config) as sess:
             # Initialize variables
             sess.run(init)
@@ -435,7 +435,7 @@ class Trainer(object):
         saver = tf.train.Saver()
 
         config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = 0.33
+        config.gpu_options.per_process_gpu_memory_fraction = 0.45
         with tf.Session(config=config) as sess:
             sess.run(init)
 
