@@ -25,6 +25,11 @@ conv_weight_num = 0
 bias_num = 0
 deconv_weight_num = 0
 
+def reset_scope():
+    conv_weight_num = 0
+    bias_num = 0
+    deconv_weight_num = 0
+    
 def weight_variable(shape, stddev=0.1):
     global conv_weight_num
     initial = tf.truncated_normal(shape, stddev=stddev)

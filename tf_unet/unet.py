@@ -31,7 +31,8 @@ import tensorflow as tf
 from tf_unet import util
 from tf_unet.layers import (weight_variable, weight_variable_devonc, bias_variable,
                             conv2d, deconv2d, max_pool, crop_and_concat, pixel_wise_softmax_2,
-                            cross_entropy)
+                            cross_entropy, reset_scope)
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s',filename = 'unet.py')
 
@@ -179,7 +180,8 @@ class Unet(object):
 
     def __init__(self, channels=3, n_class=2, cost="cross_entropy", cost_kwargs={}, **kwargs):
         tf.reset_default_graph()
-
+        #Resetting scope for this instance
+        reset_scope()
         self.n_class = n_class
         self.summaries = kwargs.get("summaries", True)
 
@@ -285,7 +287,7 @@ class Unet(object):
 
         if self.model_loaded != True:
             self.sess=self.load_model(model_path)
-            predictions = []
+        predictions = []
         #Run over list of patches
         for i in xrange(len(list_patches)):
             out_pred_row = []
