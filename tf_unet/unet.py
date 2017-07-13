@@ -50,7 +50,7 @@ def create_conv_net(x, keep_prob, channels, n_class, layers=3, features_root=16,
     :param pool_size: size of the max pooling operation
     :param summaries: Flag if summaries should be created
     """
-
+    reset_scope()
     logging.info("Layers {layers}, features {features}, filter size {filter_size}x{filter_size}, pool size: {pool_size}x{pool_size}".format(layers=layers,
                                                                                                            features=features_root,
                                                                                                            filter_size=filter_size,
@@ -245,6 +245,12 @@ class Unet(object):
             loss += (regularizer * regularizers)
 
         return loss
+
+    def predict_on_batches(self, model_path=None, x_test=None):
+        if self.model_loaded != True:
+            self.sess=self.load_model(model_path)
+        y_dummy = np.empty((x_test.shape[0], x_test.shape[1], x_test.shape[2], self.n_class))
+        prediction = sess.run(self.predicter, feed_dict={self.x: x_test, self.y: y_dummy, self.keep_prob: 1.})
 
     def predict(self, model_path, x_test):
         """
