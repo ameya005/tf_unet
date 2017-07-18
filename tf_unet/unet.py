@@ -250,7 +250,8 @@ class Unet(object):
         if self.model_loaded != True:
             self.sess=self.load_model(model_path)
         y_dummy = np.empty((x_test.shape[0], x_test.shape[1], x_test.shape[2], self.n_class))
-        prediction = sess.run(self.predicter, feed_dict={self.x: x_test, self.y: y_dummy, self.keep_prob: 1.})
+        prediction = self.sess.run(self.predicter, feed_dict={self.x: x_test, self.y: y_dummy, self.keep_prob: 1.})
+        return prediction
 
     def predict(self, model_path, x_test):
         """
