@@ -31,7 +31,8 @@ import tensorflow as tf
 from tf_unet import util
 from tf_unet.layers import (weight_variable, weight_variable_devonc, bias_variable,
                             conv2d, deconv2d, max_pool, crop_and_concat, pixel_wise_softmax_2,
-                            cross_entropy)
+                            cross_entropy, reset_scope)
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s',filename = 'unet.log')
 
@@ -49,7 +50,7 @@ def create_conv_net(x, keep_prob, channels, n_class, layers=3, features_root=16,
     :param pool_size: size of the max pooling operation
     :param summaries: Flag if summaries should be created
     """
-
+    reset_scope()
     logging.info("Layers {layers}, features {features}, filter size {filter_size}x{filter_size}, pool size: {pool_size}x{pool_size}".format(layers=layers,
                                                                                                            features=features_root,
                                                                                                            filter_size=filter_size,
@@ -179,7 +180,8 @@ class Unet(object):
 
     def __init__(self, channels=3, n_class=2, cost="cross_entropy", cost_kwargs={}, **kwargs):
         tf.reset_default_graph()
-
+        #Resetting scope for this instance
+        reset_scope()
         self.n_class = n_class
         self.summaries = kwargs.get("summaries", True)
 
@@ -243,6 +245,12 @@ class Unet(object):
             loss += (regularizer * regularizers)
 
         return loss
+
+    def predict_on_batches(self, model_path=None, x_test=None):
+        if self.model_loaded != True:
+            self.sess=self.load_model(model_path)
+        y_dummy = np.empty((x_test.shape[0], x_test.shape[1], x_test.shape[2], self.n_class))
+        prediction = sess.run(self.predicter, feed_dict={self.x: x_test, self.y: y_dummy, self.keep_prob: 1.})
 
     def predict(self, model_path, x_test):
         """
