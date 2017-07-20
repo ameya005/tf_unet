@@ -72,7 +72,7 @@ class BaseDataProvider(object):
         # normalization
         #data = np.clip(np.fabs(data), self.a_min, self.a_max)
         data -= self.mean
-        data /= self.std
+        data /= 128 
         return data
     
     def _post_process(self, data, labels):

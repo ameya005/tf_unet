@@ -270,7 +270,7 @@ class Unet(object):
 
     def load_model(self, model_path):
         config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = 0.95
+        config.gpu_options.per_process_gpu_memory_fraction = 0.45
         init = tf.global_variables_initializer()
         self.sess = tf.Session(config=config)
         self.sess.run(init)
@@ -285,7 +285,8 @@ class Unet(object):
 
         if self.model_loaded != True:
             self.sess=self.load_model(model_path)
-            predictions = []
+        predictions = []
+        print ("begin predicting")
         #Run over list of patches
         for i in xrange(len(list_patches)):
             out_pred_row = []
