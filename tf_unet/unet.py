@@ -34,7 +34,7 @@ from tf_unet.layers import (weight_variable, weight_variable_devonc, bias_variab
                             cross_entropy, reset_scope)
 
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s',filename = 'unet.py')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s',filename = 'unet.log')
 
 def create_conv_net(x, keep_prob, channels, n_class, layers=3, features_root=16, filter_size=3, pool_size=2, summaries=True):
     """
@@ -264,7 +264,7 @@ class Unet(object):
 
         init = tf.global_variables_initializer()
         config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = 0.33
+        config.gpu_options.per_process_gpu_memory_fraction = 0.90
         with tf.Session(config=config) as sess:
             # Initialize variables
             sess.run(init)
@@ -279,7 +279,7 @@ class Unet(object):
 
     def load_model(self, model_path):
         config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = 0.95
+        config.gpu_options.per_process_gpu_memory_fraction = 0.90
         init = tf.global_variables_initializer()
         self.sess = tf.Session(config=config)
         self.sess.run(init)
@@ -295,6 +295,7 @@ class Unet(object):
         if self.model_loaded != True:
             self.sess=self.load_model(model_path)
         predictions = []
+        print ("begin predicting")
         #Run over list of patches
         for i in xrange(len(list_patches)):
             out_pred_row = []
@@ -444,7 +445,7 @@ class Trainer(object):
         saver = tf.train.Saver()
 
         config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = 0.33
+        config.gpu_options.per_process_gpu_memory_fraction = 0.90
         with tf.Session(config=config) as sess:
             sess.run(init)
 
